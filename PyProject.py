@@ -1,6 +1,8 @@
 import os
 import sys
 import random
+import time
+
 import pygame
 
 
@@ -253,9 +255,9 @@ class Player(pygame.sprite.Sprite):
     imgU = load_image('player_tank_up.png', 'white')
     imgL = load_image('player_tank_left.png', 'white')
     imgR = load_image('player_tank_right.png', 'white')
+
     def __init__(self, x, y):
         super().__init__(all_sprites, player_sprites)
-
         self.image = Tank.imgD
         self.rect = self.image.get_rect()
         self.dir = 3
@@ -398,6 +400,7 @@ def terminate():
 FPS = 50
 clock = pygame.time.Clock()
 
+
 def start_screen():
     intro_text = "CLICK TO START"
     font = pygame.font.Font(None, 30)
@@ -429,6 +432,19 @@ def start_screen():
 
         pygame.display.flip()
         clock.tick(FPS)
+
+
+def win_screen():
+    wg = pygame.transform.scale(load_image('win_game.jpg'), (width, height))
+    screen.blit(wg, (0, 0))
+    pygame.display.flip()
+
+
+def loose_screen():
+    wg = pygame.transform.scale(load_image('game_over.jpg'), (width, height))
+    screen.blit(wg, (0, 0))
+    pygame.display.flip()
+
 
 tile_images = {
     'wall': load_image('block.png'),
@@ -467,6 +483,14 @@ while running:
         #     board.get_click(event.pos)
     # в главном игровом цикле
         player.move(event)
+    if not tank_sprites:
+        win_screen()
+        time.sleep(5)
+        break
+    if not player_sprites:
+        loose_screen()
+        time.sleep(5)
+        break
     screen.fill((0, 0, 0))
     all_sprites.draw(screen)
     all_sprites.update()
