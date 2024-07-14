@@ -92,7 +92,13 @@ class Ball(pygame.sprite.Sprite):
             for brick in brick_sprites:
                 if pygame.sprite.collide_rect(self, brick):
                     br = brick
-            # t = Tile('empty', br.rect.x, br.rect.y)
+            br.kill()
+        if pygame.sprite.spritecollideany(self, base_sprite):
+            self.kill()
+            br = None
+            for base in base_sprite:
+                if pygame.sprite.collide_rect(self, base):
+                    br = base
             br.kill()
         # if pygame.sprite.collide_rect(self, base_sprite):
         #     self.kill()
@@ -157,14 +163,14 @@ class BallPlayer(pygame.sprite.Sprite):
             t = Tile('empty', br.rect.x, br.rect.y)
             br.kill()
             saved_sprites = list(all_sprites.sprites())
-            print(saved_sprites)
+            # print(saved_sprites)
             all_sprites.empty()
             all_sprites.add(t)
             for sp in saved_sprites:
                 all_sprites.add(sp)
-            for el in all_sprites:
-                if t == el:
-                    print(1)
+            # for el in all_sprites:
+            #     if t == el:
+            #         print(1)
 
 
 class Tank(pygame.sprite.Sprite):
@@ -173,8 +179,6 @@ class Tank(pygame.sprite.Sprite):
     imgL = load_image('enemy_blue_left.png')
     imgR = load_image('enemy_blue_right.png')
     def __init__(self, x, y):
-        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
-        # Это очень важно !!!
         super().__init__(all_sprites, tank_sprites)
 
         self.image = Tank.imgD
@@ -222,6 +226,19 @@ class Tank(pygame.sprite.Sprite):
                 self.dir = 2
                 self.rect = self.rect.move(20 * self.vy / self.fps, 0)
         if pygame.sprite.spritecollideany(self, brick_sprites):
+            if self.dir == 0:
+                self.dir = 3
+                self.rect = self.rect.move(0, -10 * self.vy / self.fps)
+            elif self.dir == 3:
+                self.dir = 0
+                self.rect = self.rect.move(0, 10 * self.vy / self.fps)
+            elif self.dir == 2:
+                self.dir = 1
+                self.rect = self.rect.move(-10 * self.vy / self.fps, 0)
+            else:
+                self.dir = 2
+                self.rect = self.rect.move(10 * self.vy / self.fps, 0)
+        if pygame.sprite.spritecollideany(self, base_sprite):
             if self.dir == 0:
                 self.dir = 3
                 self.rect = self.rect.move(0, -10 * self.vy / self.fps)
@@ -372,6 +389,7 @@ def generate_level(level):
     # вернем игрока, а также размер поля в клетках
     return new_player, x, y
 
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         if tile_type == 'brick':
@@ -434,6 +452,7 @@ def start_screen():
         clock.tick(FPS)
 
 
+
 def win_screen():
     wg = pygame.transform.scale(load_image('win_game.jpg'), (width, height))
     screen.blit(wg, (0, 0))
@@ -467,9 +486,12 @@ Border(tile_width, height - tile_height, width - tile_width, height - tile_heigh
 Border(tile_width, tile_height, tile_width, height - tile_height)
 Border(width - tile_width, tile_height, width - tile_width, height - tile_height)
 
+not_start_screen = True
 start_screen()
 v = 20  # пикселей в секунду
-player_coords, level_x, level_y = generate_level(load_level('map01.txt'))
+currentMap = 1
+player_coords, level_x, level_y = generate_level(load_level('map0' + str(currentMap) + '.txt'))
+not_start_screen = False
 player = Player(player_coords[0], player_coords[1])
 for el in tanks_coords:
     Tank(el[0], el[1])
@@ -484,10 +506,23 @@ while running:
     # в главном игровом цикле
         player.move(event)
     if not tank_sprites:
-        win_screen()
+        if currentMap == 3:
+            win_screen()
+            time.sleep(5)
+            break
+        currentMap += 1
+        tanks_coords = []
+        tiles_group.empty()
+        player_group.empty()
+        player_coords, level_x, level_y = generate_level(load_level('map0' + str(currentMap) + '.txt'))
+        player = Player(player_coords[0], player_coords[1])
+        for el in tanks_coords:
+            Tank(el[0], el[1])
+    if not player_sprites:
+        loose_screen()
         time.sleep(5)
         break
-    if not player_sprites:
+    if not base_sprite or not_start_screen:
         loose_screen()
         time.sleep(5)
         break
